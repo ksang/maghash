@@ -9,6 +9,7 @@ package maghash
 import (
 	"hash"
 	"hash/fnv"
+	"sort"
 	"sync/atomic"
 )
 
@@ -55,7 +56,7 @@ func (p *magHash) getHash(backendIdx int, h hash.Hash64) (hash uint64, err error
 // Values for old backends are re-used.
 // To re-create permutation table, simply empty it.
 // formula: P[i][j] = (offset + j*skip) mod M
-func (p *magHash) spawnPermutation() (err error) {
+func (p *magHash) spawnPermutation(m int) (err error) {
 	p.bMu.RLock()
 	p.pMu.Lock()
 	defer func() {
@@ -64,7 +65,11 @@ func (p *magHash) spawnPermutation() (err error) {
 	}()
 	// n and m are protected by bMu and pMu.
 	n := int(p.n)
-	m := int(p.m)
+	if m == 0 {
+		m = int(p.m)
+	} else {
+		p.m = int32(m)
+	}
 	if int(n) != len(p.backends) {
 		panic("backend number inconsistent, something wrong.")
 	}
@@ -123,6 +128,9 @@ func (p *magHash) populate() {
 	}
 }
 
+// Add a list of backends to Maglev hashing.
+// It will trigger re-calculate permutation array and populate
+// lookup table. (Asynchronize)
 func (p *magHash) AddBackends(backends []string) (err error) {
 	p.bMu.Lock()
 	defer p.bMu.Unlock()
@@ -136,21 +144,74 @@ func (p *magHash) AddBackends(backends []string) (err error) {
 	}
 
 	go func() {
-		p.spawnPermutation()
+		p.spawnPermutation(0)
 		p.populate()
 	}()
 
 	return
 }
 
+// Add a list of backends to Maglev hashing.
+// It will remove corresponding data from permutation array
+// and re-populate lookup table. (Asynchronize)
+func (p *magHash) RemoveBackends(backends []string) {
+	p.pMu.Lock()
+	p.bMu.Lock()
+	p.eMu.Lock()
+	defer func() {
+		p.pMu.Unlock()
+		p.bMu.Unlock()
+		p.eMu.Unlock()
+	}()
+
+	// Remove backends from backend[]
+	delList := make([]int, 0)
+	for _, b := range backends {
+		idx, ok := p.bIndex[b]
+		if ok {
+			delList = append(delList, idx)
+		}
+	}
+
+	if len(delList) == 0 {
+		return
+	}
+
+	sort.Ints(delList)
+	bbuf := make([][]byte, 0)
+	pbuf := make([][]int, 0)
+	start := 0
+	for i := 0; i < len(delList); i++ {
+		if delList[i] > start {
+			bbuf = append(bbuf, p.backends[start:delList[i]]...)
+			pbuf = append(pbuf, p.permutation[start:delList[i]]...)
+		}
+		start = delList[i] + 1
+	}
+	p.backends = bbuf
+	p.permutation = pbuf
+
+	// Renew data
+	p.n = int32(len(p.backends))
+	p.bIndex = make(map[string]int)
+	for i, b := range p.backends {
+		p.bIndex[string(b)] = i
+	}
+
+	go p.populate()
+}
+
+// Get the backend number
 func (p *magHash) BackendsNum() (count int) {
 	return int(atomic.LoadInt32(&p.n))
 }
 
+// Get the M value
 func (p *magHash) M() (m int) {
 	return int(atomic.LoadInt32((&p.m)))
 }
 
+// Get the selected backend for provided flow
 func (p *magHash) GetBackend(flow string) (backend string) {
 	fnv := fnv.New64()
 	fnv.Write([]byte(flow))
@@ -173,6 +234,7 @@ func (p *magHash) GetBackend(flow string) (backend string) {
 	return string(p.backends[bIdx])
 }
 
+// Return the current lookup table. (for debug use)
 func (p *magHash) LookupTable() (lookup []string) {
 	p.eMu.RLock()
 	p.bMu.RLock()
@@ -186,5 +248,23 @@ func (p *magHash) LookupTable() (lookup []string) {
 	for i, bIdx := range p.entry {
 		lookup[i] = string(p.backends[bIdx])
 	}
+	return
+}
+
+// Adjust M value. M must larger than backend number.
+// A greater M value increasing backend selection equalization
+// while decreasing performance.
+func (p *magHash) SetM(m int) (err error) {
+	n := int(atomic.LoadInt32(&p.n))
+	if !isPrime(m) || m <= n {
+		return ErrInvalidPrime
+	}
+	if err = p.spawnPermutation(m); err != nil {
+		return err
+	}
+
+	go func() {
+		p.populate()
+	}()
 	return
 }

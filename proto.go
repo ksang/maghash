@@ -12,11 +12,18 @@ type MagHash interface {
 	// data structures. It will trigger a permutation and lookup table re-calculation
 	AddBackends(backends []string) (err error)
 
+	// Remove backends from backend list, we don't need recalculate permutation
+	// but a lookup table populate is required.
+	RemoveBackends(backends []string)
+
 	// Get the current number of backends.
 	BackendsNum() (count int)
 
 	// Get the m value for hash calculation.
 	M() (m int)
+
+	// Change M value.
+	SetM(m int) (err error)
 
 	// Get the backend lookup result for given flow.
 	GetBackend(flow string) (backend string)
@@ -52,6 +59,9 @@ type magHash struct {
 // A greater M value increasing backend selection equalization
 // while decreasing performance.
 func NewMagHash(m int) (mh MagHash, err error) {
+	if m == 0 {
+		m = defaultPrime
+	}
 	if !isPrime(m) {
 		err = ErrInvalidPrime
 		return

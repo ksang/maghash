@@ -75,7 +75,7 @@ func TestPermutation(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	magh.spawnPermutation()
+	magh.spawnPermutation(0)
 	if magh.m != 17 || magh.n != 10 || len(magh.backends) != 10 {
 		t.Error("M/N/len(backends) incorrect")
 		t.Errorf("M:%v N:%v len(backends):%v len(bes):%v",
@@ -103,7 +103,7 @@ func TestPopulation(t *testing.T) {
 	if err := magh.AddBackends(bes); err != nil {
 		t.Error(err)
 	}
-	magh.spawnPermutation()
+	magh.spawnPermutation(0)
 	printPermutation(magh.permutation)
 	magh.populate()
 	printLookup(magh.entry)
@@ -162,4 +162,23 @@ func TestSingle(t *testing.T) {
 	}
 	printLookupTable(mh.LookupTable())
 	printSelectionResult(res)
+}
+
+func TestRemove(t *testing.T) {
+	bes := []string{"1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4", "5.5.5.5"}
+	rbes := []string{"2.2.2.2", "5.5.5.5"}
+	mh := &magHash{
+		m:        int32(11),
+		backends: make([][]byte, 0),
+		bIndex:   make(map[string]int),
+		entry:    make([]int, 11),
+	}
+	if err := mh.AddBackends(bes); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("%#+v\n", mh)
+
+	mh.RemoveBackends(rbes)
+	time.Sleep(time.Second)
+	fmt.Printf("%#+v\n", mh)
 }
