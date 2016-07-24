@@ -13,7 +13,6 @@ Maglev hashing algorithm implementation in Golang for load balance backend selec
 	)
 
 	func main() {
-
 		// 0 means use the default M value: 65537
 		mh, err := maghash.NewMagHash(0)
 		if err != nil {
@@ -38,6 +37,7 @@ Maglev hashing algorithm implementation in Golang for load balance backend selec
 		if err := mh.AddBackends(backends); err != nil {
 			log.Fatal(err)
 		}
+		
 		// The lookup table calculation is Asyncronize, so need to wait
 		time.Sleep(time.Second)
 		for _, f := range flows {
