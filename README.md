@@ -1,7 +1,38 @@
 # Maghash
 Maglev hashing algorithm implementation in Golang for load balance backend selection
 
-###example
+####Interface
+	// MagHash is an interface providing Maglev Hashing functions
+	type MagHash interface {
+		// Add backends to Maglev hashing, those added items will be considered
+		// as available backends. This will internally RW lock backend related
+		// data structures. It will trigger a permutation and lookup table re-calculation
+		AddBackends(backends []string) (err error)
+
+		// Remove backends from backend list, we don't need recalculate permutation
+		// but a lookup table populate is required.
+		RemoveBackends(backends []string)
+
+		// Get the current number of backends.
+		BackendsNum() (count int)
+
+		// Get the m value for hash calculation.
+		M() (m int)
+
+		// Change M value.
+		SetM(m int) (err error)
+
+		// Get the backend lookup result for given flow.
+		GetBackend(flow string) (backend string)
+
+		// Get the lookup table (list of backends)
+		LookupTable() (backends []string)
+	}
+
+####Documentation:
+[Godoc](https://godoc.org/github.com/ksang/maghash)
+
+####Example
 	maghash.go:
 
 	package main
@@ -37,7 +68,7 @@ Maglev hashing algorithm implementation in Golang for load balance backend selec
 		if err := mh.AddBackends(backends); err != nil {
 			log.Fatal(err)
 		}
-		
+
 		// The lookup table calculation is Asyncronize, so need to wait
 		time.Sleep(time.Second)
 		for _, f := range flows {
@@ -46,7 +77,7 @@ Maglev hashing algorithm implementation in Golang for load balance backend selec
 
 	}
 
-###output
+######Output
 	$ go run maghash.go
 	2016/07/24 13:36:32 Backend selected: 4.4.4.4
 	2016/07/24 13:36:32 Backend selected: 1.1.1.1
