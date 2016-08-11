@@ -9,12 +9,13 @@ import (
 )
 
 func TestOffsetSkip(t *testing.T) {
-	magh := &magHash{
+	magh := magHash{
 		m:        int32(91),
 		backends: make([][]byte, 0),
 		bIndex:   make(map[string]int),
+		entry:    make([]int, 91),
 	}
-	bes := make([]string, 100)
+	bes := make([]string, 0)
 	for i := 0; i < 100; i++ {
 		bes = append(bes, strconv.FormatInt(rand.Int63(), 10))
 	}
@@ -62,10 +63,11 @@ func printLookup(entry []int) {
 }
 
 func TestPermutation(t *testing.T) {
-	magh := &magHash{
+	magh := magHash{
 		m:        int32(17),
 		backends: make([][]byte, 0),
 		bIndex:   make(map[string]int),
+		entry:    make([]int, 17),
 	}
 	bes := make([]string, 10)
 	for i := 0; i < 10; i++ {
@@ -90,7 +92,7 @@ func TestPermutation(t *testing.T) {
 }
 
 func TestPopulation(t *testing.T) {
-	magh := &magHash{
+	magh := magHash{
 		m:        int32(17),
 		backends: make([][]byte, 0),
 		bIndex:   make(map[string]int),

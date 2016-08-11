@@ -22,9 +22,6 @@ type MagHash interface {
 	// Get the m value for hash calculation.
 	M() (m int)
 
-	// Change M value.
-	SetM(m int) (err error)
-
 	// Get the backend lookup result for given flow.
 	GetBackend(flow string) (backend string)
 

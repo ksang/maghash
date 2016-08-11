@@ -7,6 +7,7 @@ ref:
 package maghash
 
 import (
+	"fmt"
 	"hash"
 	"hash/fnv"
 	"sort"
@@ -248,31 +249,5 @@ func (p *magHash) LookupTable() (lookup []string) {
 	for i, bIdx := range p.entry {
 		lookup[i] = string(p.backends[bIdx])
 	}
-	return
-}
-
-// Adjust M value. M must larger than backend number.
-// A greater M value increasing backend selection equalization
-// while decreasing performance.
-func (p *magHash) SetM(m int) (err error) {
-	om := int(atomic.LoadInt32(&p.m))
-	if m == om {
-		return nil
-	}
-
-	n := int(atomic.LoadInt32(&p.n))
-	if !isPrime(m) || m <= n {
-		return ErrInvalidPrime
-	}
-	p.pMu.Lock()
-	p.permutation = make([][]int, 0)
-	p.pMu.ULock()
-	if err = p.spawnPermutation(m); err != nil {
-		return err
-	}
-
-	go func() {
-		p.populate()
-	}()
 	return
 }
