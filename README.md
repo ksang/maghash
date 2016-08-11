@@ -19,9 +19,6 @@ Maglev hashing algorithm implementation in Golang for load balance backend selec
 		// Get the m value for hash calculation.
 		M() (m int)
 
-		// Change M value.
-		SetM(m int) (err error)
-
 		// Get the backend lookup result for given flow.
 		GetBackend(flow string) (backend string)
 
