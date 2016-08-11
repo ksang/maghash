@@ -7,7 +7,6 @@ ref:
 package maghash
 
 import (
-	"fmt"
 	"hash"
 	"hash/fnv"
 	"sort"
