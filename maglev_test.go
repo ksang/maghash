@@ -178,9 +178,10 @@ func TestRemove(t *testing.T) {
 	if err := mh.AddBackends(bes); err != nil {
 		t.Fatal(err)
 	}
+	time.Sleep(time.Second)
 	fmt.Printf("%#+v\n", mh)
-
 	mh.RemoveBackends(rbes)
 	time.Sleep(time.Second)
 	fmt.Printf("%#+v\n", mh)
+	_ = "breakpoint"
 }
