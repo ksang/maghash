@@ -1,7 +1,7 @@
 # Maghash
 Maglev hashing algorithm implementation in Golang for load balance backend selection
 
-####Interface
+#### Interface
 	// MagHash is an interface providing Maglev Hashing functions
 	type MagHash interface {
 		// Add backends to Maglev hashing, those added items will be considered
@@ -26,10 +26,10 @@ Maglev hashing algorithm implementation in Golang for load balance backend selec
 		LookupTable() (backends []string)
 	}
 
-####Documentation:
+#### Documentation:
 [Godoc](https://godoc.org/github.com/ksang/maghash)
 
-####Example
+#### Example
 	maghash.go:
 
 	package main
@@ -74,7 +74,7 @@ Maglev hashing algorithm implementation in Golang for load balance backend selec
 
 	}
 
-######Output
+###### Output
 	$ go run maghash.go
 	2016/07/24 13:36:32 Backend selected: 4.4.4.4
 	2016/07/24 13:36:32 Backend selected: 1.1.1.1
