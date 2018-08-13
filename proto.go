@@ -52,7 +52,7 @@ type magHash struct {
 	entry []int
 }
 
-// Creates Maghash with M, M must larger than backend number.
+// NewMagHash creates Maghash with M, M must larger than backend number.
 // A greater M value increasing backend selection equalization
 // while decreasing performance.
 func NewMagHash(m int) (mh MagHash, err error) {
@@ -73,6 +73,8 @@ func NewMagHash(m int) (mh MagHash, err error) {
 }
 
 var (
+	//ErrInvalidIndex indicates invalid index
 	ErrInvalidIndex = errors.New("invalid index")
+	//ErrInvalidPrime indicates invalid prime number
 	ErrInvalidPrime = errors.New("invalid prime number")
 )

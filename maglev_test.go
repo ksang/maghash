@@ -64,6 +64,7 @@ func printLookup(entry []int) {
 
 func TestPermutation(t *testing.T) {
 	magh := magHash{
+		// m value must be a prime
 		m:        int32(17),
 		backends: make([][]byte, 0),
 		bIndex:   make(map[string]int),

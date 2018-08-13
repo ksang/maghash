@@ -1,5 +1,4 @@
-/*
-maghash implements Google's load balance solution - Maglev's consistent
+/*Package maghash implements Google's load balance solution - Maglev's consistent
 hashing algorithm.
 ref:
 	http://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/44824.pdf
@@ -31,6 +30,9 @@ func (p *magHash) offset(backendIdx int) (offset int, err error) {
 func (p *magHash) skip(backendIdx int) (offset int, err error) {
 	fnva := fnv.New64a()
 	h2, err := p.getHash(backendIdx, fnva)
+	if err != nil {
+		return
+	}
 	m := int(p.m)
 	return int(h2%uint64(m-1)) + 1, nil
 }
@@ -77,7 +79,10 @@ func (p *magHash) spawnPermutation(m int) (err error) {
 	for i := calced; i < n; i++ {
 		buf := make([]int, m)
 		for j := 0; j < m; j++ {
-			offset, err := p.offset(i)
+			offset, err1 := p.offset(i)
+			if err != nil {
+				return err1
+			}
 			skip, err := p.skip(i)
 			if err != nil {
 				return err
